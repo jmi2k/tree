@@ -373,7 +373,10 @@ threadmain(int argc, char *argv[])
 	if(argc == 0)
 		strncpy(rootpath, wdir, PATHMAX+1);
 	else if(argc == 1)
-		snprint(rootpath, PATHMAX+1, "%s/%s", wdir, argv[0]);
+		if(argv[0][0] == '/')
+			strncpy(rootpath, argv[0], PATHMAX+1);
+		else
+			snprint(rootpath, PATHMAX+1, "%s/%s", wdir, argv[0]);
 	else
 		usage();
 	cleanname(rootpath);
