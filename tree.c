@@ -129,9 +129,10 @@ freecache(Cache *cache)
 
 	for(i = 0; i < NCACHE; i++){
 		c = cache+i;
+		free(c->dirs);
+		c->dirs = nil;
 		c->n = 0;
 		c->max = 0;
-		free(c->dirs);
 	}
 }
 
