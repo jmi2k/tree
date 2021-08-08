@@ -251,7 +251,11 @@ gendirtree(void)
 {
 	freedirtree(dirtree);
 	freecache(cache);
-	dirtree = _gendirtree(rootpath, cache, nil);
+	dirtree = mallocz(sizeof(Dirtree), 1);
+	dirtree->name = strdup(rootpath);
+	dirtree->isdir = 1;
+	dirtree->unfold = unfold;
+	dirtree->children = _gendirtree(rootpath, cache, nil);
 }
 
 void
