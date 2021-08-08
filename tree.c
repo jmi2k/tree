@@ -171,8 +171,8 @@ Start:
 	snprint(buf, PATHMAX+1, "%s", T->name);
 	string(screen, q, col, ZP, font, buf);
 	if(level > 0){
-		p₀ = addpt(p, Pt(-Indent+Lxoff, Itemh/2+Lyoff));
-		p₁ = addpt(p₀, Pt(Indent-Padx, 0));
+		p₀ = addpt(p, Pt(-Padx, Itemh/2+Lyoff));
+		p₁ = Pt(p₀.x-Indent+Lxoff+Padx, p₀.y);
 		line(screen, p₀, p₁, 0, 0, 0, linecol, ZP);
 	}
 	*item = *item+1;
