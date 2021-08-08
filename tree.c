@@ -51,6 +51,7 @@ Image*			seltextcol;
 Mousectl*		mousectl;
 Keyboardctl*	keyboardctl;
 Dirtree*		dirtree;
+char			wdir[PATHMAX+1];
 char			rootpath[PATHMAX+1];
 int				plumbfd;
 int				unfold;
@@ -305,7 +306,7 @@ plumbitem(void)
 	if(t == nil)
 		return;
 	snprint(buf, PATHMAX+1, "%s/%本", rootpath, t);
-	plumbsendtext(plumbfd, "tree", nil, nil, buf);
+	plumbsendtext(plumbfd, "tree", nil, wdir, buf);
 }
 
 void
@@ -368,12 +369,14 @@ threadmain(int argc, char *argv[])
 		usage();
 	}ARGEND;
 
+	getwd(wdir, sizeof(rootpath));
 	if(argc == 0)
-		getwd(rootpath, sizeof(rootpath));
+		strncpy(rootpath, wdir, PATHMAX+1);
 	else if(argc == 1)
-		strncpy(rootpath, argv[0], PATHMAX+1);
+		snprint(rootpath, PATHMAX+1, "%s/%s", wdir, argv[0]);
 	else
 		usage();
+	cleanname(rootpath);
 	fmtinstall(L'本', dirtreefmt);
 	if(initdraw(nil, nil, argv0) < 0)
 		sysfatal("cannot init draw: %r");
