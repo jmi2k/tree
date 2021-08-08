@@ -105,7 +105,7 @@ Start:
 	}else
 		col = textcol;
 	if(T->isdir){
-		string(screen, p, col, ZP, font, T->unfold ? "⊞" : "⊟");
+		string(screen, p, col, ZP, font, T->unfold ? "⊟" : "⊞");
 		q.x += stringwidth(font, "⊞ ");
 	}
 	snprint(buf, PATHMAX+1, "%s", T->name);
