@@ -76,6 +76,17 @@ dirtreefmt(Fmt *f)
 		: fmtprint(f, "%s", t->name);
 }
 
+void
+freedirtree(Dirtree *t)
+{
+	if(t == nil)
+		return;
+	freedirtree(t->children);
+	freedirtree(t->next);
+	free(t->name);
+	free(t);
+}
+
 int
 itemat(Point xy)
 {
@@ -185,9 +196,10 @@ _gendirtree(char path[], Dirtree *parent)
 }
 
 void
-gendirtree(char path[])
+gendirtree(void)
 {
-	dirtree = _gendirtree(path, nil);
+	freedirtree(dirtree);
+	dirtree = _gendirtree(rootpath, nil);
 }
 
 void
@@ -205,7 +217,7 @@ menu2(void)
 
 	switch(menuhit(2, mousectl, &menu, nil)){
 	case Refresh:
-		gendirtree(rootpath);
+		gendirtree();
 		redraw();
 		break;
 	case Exit:
@@ -375,7 +387,7 @@ threadmain(int argc, char *argv[])
 	if(plumbfd < 0)
 		sysfatal("cannot open plumber: %r");
 	initstyle();
-	gendirtree(rootpath);
+	gendirtree();
 	redraw();
 	loop();
 }
