@@ -56,9 +56,9 @@ int				plumbfd;
 int				unfold;
 int				selitem = -1;
 
-char *menu3str[] = {
-	[Refresh]	= "Refresh",
-	[Exit]		= "Exit",
+char *menu2str[] = {
+	[Refresh]	= "refresh",
+	[Exit]		= "exit",
 	[Exit+1]	= nil,
 };
 
@@ -199,11 +199,11 @@ redraw(void)
 }
 
 void
-menu3(void)
+menu2(void)
 {
-	static Menu menu = {menu3str};
+	static Menu menu = {menu2str};
 
-	switch(menuhit(3, mousectl, &menu, nil)){
+	switch(menuhit(2, mousectl, &menu, nil)){
 	case Refresh:
 		gendirtree(rootpath);
 		redraw();
@@ -289,7 +289,7 @@ plumbitem(void)
 	static char buf[PATHMAX+1];
 	Dirtree *t;
 
-	t = clickitem(2);
+	t = clickitem(3);
 	if(t == nil)
 		return;
 	snprint(buf, PATHMAX+1, "%s/%本", rootpath, t);
@@ -315,9 +315,9 @@ loop(void)
 		if(mousectl->buttons & 1)
 			toggleitem();
 		if(mousectl->buttons & 2)
-			plumbitem();
+			menu2();
 		if(mousectl->buttons & 4)
-			menu3();
+			plumbitem();
 		break;
 	case Keyboardc:
 		if(r == Kdel)
