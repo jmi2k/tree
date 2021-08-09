@@ -7,12 +7,10 @@
 #include <plumb.h>
 
 typedef struct Dirtree Dirtree;
-typedef struct Cache Cache;
 
 enum
 {
 	PATHMAX	= 8191,
-	NCACHE	= 256,	/* must be a power of 2 */
 
 	Indent	= 32,
 	Padx	= 8,
@@ -45,22 +43,13 @@ struct Dirtree
 	Dirtree*	next;
 };
 
-struct Cache
-{
-	Dir*	dirs;
-	int		n;
-	int		max;
-};
-
 int			dirtreefmt(Fmt*);
 void		freedirtree(Dirtree*);
-int			seen(Cache[], Dir*);
-void		freecache(Cache*);
 int			itemat(Point);
 void		scroll(int);
 int			_drawdirtree(Dirtree*, int, int*);
 int			drawdirtree(Dirtree*);
-Dirtree*	_gendirtree(char[], Cache[], Dirtree*);
+Dirtree*	_gendirtree(char[], Dirtree*);
 void		gendirtree(void);
 void		redraw(void);
 void		menu2(void);
@@ -74,7 +63,6 @@ void		loop(void);
 void		initstyle(void);
 void		usage(void);
 
-Cache			cache[NCACHE];
 Image*			treeback;
 Image*			textcol;
 Image*			linecol;
@@ -120,44 +108,6 @@ freedirtree(Dirtree *t)
 	freedirtree(t->next);
 	free(t->name);
 	free(t);
-}
-
-int
-seen(Cache cache[], Dir *f)
-{
-	Cache *c;
-	int i;
-
-	c = cache + (f->qid.path & NCACHE-1);
-	for(i = 0; i < c->n; i++)
-		if(memcmp(&f->qid, &c->dirs[i].qid, sizeof(Qid)) == 0)
-			return 1;
-	if(c->n == c->max){
-		if (c->max == 0)
-			c->max = 8;
-		else
-			c->max += c->max/2;
-		c->dirs = realloc(c->dirs, c->max*sizeof(Dir));
-		if(c->dirs == nil)
-			sysfatal("cannot realloc: %r");
-	}
-	c->dirs[c->n++] = *f;
-	return 0;
-}
-
-void
-freecache(Cache *cache)
-{
-	Cache *c;
-	int i;
-
-	for(i = 0; i < NCACHE; i++){
-		c = cache+i;
-		free(c->dirs);
-		c->dirs = nil;
-		c->n = 0;
-		c->max = 0;
-	}
 }
 
 int
@@ -243,7 +193,7 @@ drawdirtree(Dirtree *T)
 }
 
 Dirtree*
-_gendirtree(char path[], Cache cache[], Dirtree *parent)
+_gendirtree(char path[], Dirtree *parent)
 {
 	Dirtree *T, *t, *newt;
 	Dir *dirs, *f, *fe;
@@ -260,8 +210,6 @@ _gendirtree(char path[], Cache cache[], Dirtree *parent)
 	while((n = dirread(fd, &dirs)) > 0){
 		fe = dirs+n;
 		for(f = dirs; f < fe; f++){
-			if(seen(cache, f))
-				continue;
 			newt = mallocz(sizeof(Dirtree), 1);
 			newt->name = strdup(f->name);
 			newt->parent = parent;
@@ -279,7 +227,7 @@ _gendirtree(char path[], Cache cache[], Dirtree *parent)
 					sysfatal("cannot generate path: %r");
 				newt->isdir = 1;
 				newt->unfold = unfold;
-				newt->children = _gendirtree(buf, cache, newt);
+				newt->children = _gendirtree(buf, newt);
 			}
 		}
 		free(dirs);
@@ -293,12 +241,11 @@ void
 gendirtree(void)
 {
 	freedirtree(dirtree);
-	freecache(cache);
 	dirtree = mallocz(sizeof(Dirtree), 1);
 	dirtree->name = strdup(rootpath);
 	dirtree->isdir = 1;
 	dirtree->unfold = unfold;
-	dirtree->children = _gendirtree(rootpath, cache, nil);
+	dirtree->children = _gendirtree(rootpath, nil);
 }
 
 void
