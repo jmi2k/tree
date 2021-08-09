@@ -414,7 +414,7 @@ initstyle(void)
 void
 usage(void)
 {
-	fprint(2, "usage: %s [-e] [path]\n", argv0);
+	fprint(2, "usage: %s [path]\n", argv0);
 	exits("usage");
 }
 
