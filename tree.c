@@ -175,6 +175,8 @@ scroll(int sign)
 	if(n < 1)
 		n = 1;
 	scrollpos += sign*n;
+	if(scrollpos < 0)
+		scrollpos = 0;
 	redraw();
 }
 
