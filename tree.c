@@ -74,7 +74,6 @@ Dirtree*		dirtree;
 char			wdir[PATHMAX+1];
 char			rootpath[PATHMAX+1];
 int				plumbfd;
-int				unfold;
 int				scrollpos;
 int				selitem = -1;
 
@@ -226,8 +225,6 @@ _gendirtree(char path[], Dirtree *parent)
 				if(snprint(buf, PATHMAX, "%s/%s", path, f->name) < 0)
 					sysfatal("cannot generate path: %r");
 				newt->isdir = 1;
-				newt->unfold = unfold;
-				newt->children = _gendirtree(buf, newt);
 			}
 		}
 		free(dirs);
@@ -244,7 +241,6 @@ gendirtree(void)
 	dirtree = mallocz(sizeof(Dirtree), 1);
 	dirtree->name = strdup(rootpath);
 	dirtree->isdir = 1;
-	dirtree->unfold = unfold;
 	dirtree->children = _gendirtree(rootpath, nil);
 }
 
@@ -332,11 +328,24 @@ clickitem(int button)
 void
 toggleitem(void)
 {
+	static char buf[PATHMAX+1];
 	Dirtree *t;
 
 	t = clickitem(1);
 	if(t == nil)
 		return;
+	if(t->unfold){
+		freedirtree(t->children);
+		t->children = nil;
+	}else{
+		if(t == dirtree){
+			strncpy(buf, rootpath, PATHMAX+1);
+			t->children = _gendirtree(buf, nil);
+		}else{
+			snprint(buf, PATHMAX+1, "%s/%本", rootpath, t);
+			t->children = _gendirtree(buf, t);
+		}
+	}
 	t->unfold ^= 1;
 	redraw();
 }
@@ -411,9 +420,6 @@ void
 threadmain(int argc, char *argv[])
 {
 	ARGBEGIN{
-	case 'u':
-		unfold = 1;
-		break;
 	default:
 		usage();
 	}ARGEND;
