@@ -334,6 +334,8 @@ toggleitem(void)
 	t = clickitem(1);
 	if(t == nil)
 		return;
+	if(!t->isdir)
+		return;
 	if(t->unfold){
 		freedirtree(t->children);
 		t->children = nil;
