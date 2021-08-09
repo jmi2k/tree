@@ -192,9 +192,12 @@ Start:
 	if(T == nil)
 		return i;
 
-	p = addpt(Pt(level*Indent + Padx, Itemy(*item+scrollpos)), screen->r.min);
+	p = addpt(Pt(level*Indent + Padx, Itemy(*item-scrollpos)), screen->r.min);
+	q = addpt(p, Pt(Dy(screen->r), Itemh));
+	if(!rectXrect(screen->r, Rpt(p, q)))
+		goto Skip;
 	q = p;
-	if(*item+scrollpos == selitem){
+	if(*item == selitem){
 		p₀ = Pt(screen->r.min.x, p.y-Pady);
 		p₁ = Pt(screen->r.max.x, p.y+font->height+Pady);
 		draw(screen, Rpt(p₀, p₁), selcol, nil, ZP);
@@ -212,6 +215,7 @@ Start:
 		p₁ = Pt(p₀.x-Indent+Lxoff+Padx, p₀.y);
 		line(screen, p₀, p₁, 0, 0, 0, linecol, ZP);
 	}
+Skip:
 	*item = *item+1;
 	i = *item;
 	if(T->unfold){
