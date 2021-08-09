@@ -52,6 +52,28 @@ struct Cache
 	int		max;
 };
 
+int			dirtreefmt(Fmt*);
+void		freedirtree(Dirtree*);
+int			seen(Cache[], Dir*);
+void		freecache(Cache*);
+int			itemat(Point);
+void		scroll(int);
+int			_drawdirtree(Dirtree*, int, int*);
+int			drawdirtree(Dirtree*);
+Dirtree*	_gendirtree(char[], Cache[], Dirtree*);
+void		gendirtree(void);
+void		redraw(void);
+void		menu2(void);
+void		resized(void);
+Dirtree*	_lookupitem(Dirtree*, int, int*);
+Dirtree*	lookupitem(int);
+Dirtree*	clickitem(int);
+void		toggleitem(void);
+void		plumbitem(void);
+void		loop(void);
+void		initstyle(void);
+void		usage(void);
+
 Cache			cache[NCACHE];
 Image*			treeback;
 Image*			textcol;
@@ -65,6 +87,7 @@ char			wdir[PATHMAX+1];
 char			rootpath[PATHMAX+1];
 int				plumbfd;
 int				unfold;
+int				scrollpos;
 int				selitem = -1;
 
 char *menu2str[] = {
@@ -75,6 +98,7 @@ char *menu2str[] = {
 
 #define Itemh		(2*Pady+font->height)
 #define Itemy(i)	(Pady+(i)*Itemh)
+#define Scripos(Y)	(((Y)-screen->r.min.y)/Itemh)
 
 int
 dirtreefmt(Fmt *f)
@@ -139,7 +163,19 @@ freecache(Cache *cache)
 int
 itemat(Point xy)
 {
-	return (xy.y-screen->r.min.y)/Itemh;
+	return Scripos(xy.y)+scrollpos;
+}
+
+void
+scroll(int sign)
+{
+	int n;
+
+	n = Scripos(mousectl->xy.y);
+	if(n < 1)
+		n = 1;
+	scrollpos += sign*n;
+	redraw();
 }
 
 int
@@ -155,9 +191,10 @@ _drawdirtree(Dirtree *T, int level, int *item)
 Start:
 	if(T == nil)
 		return i;
-	p = addpt(Pt(level*Indent + Padx, Itemy(*item)), screen->r.min);
+
+	p = addpt(Pt(level*Indent + Padx, Itemy(*item+scrollpos)), screen->r.min);
 	q = p;
-	if(*item == selitem){
+	if(*item+scrollpos == selitem){
 		p₀ = Pt(screen->r.min.x, p.y-Pady);
 		p₁ = Pt(screen->r.max.x, p.y+font->height+Pady);
 		draw(screen, Rpt(p₀, p₁), selcol, nil, ZP);
@@ -386,6 +423,10 @@ loop(void)
 			menu2();
 		if(mousectl->buttons & 4)
 			plumbitem();
+		if(mousectl->buttons & 8)
+			scroll(-1);
+		if(mousectl->buttons & 16)
+			scroll(+1);
 		break;
 	case Keyboardc:
 		if(r == Kdel)
