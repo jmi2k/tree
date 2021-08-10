@@ -196,13 +196,11 @@ _gendirtree(char path[], Dirtree *parent)
 {
 	Dirtree *T, *t, *newt;
 	Dir *dirs, *f, *fe;
-	char *buf;
 	int fd;
 	long n;
 
 	T = nil;
 	t = nil;
-	buf = nil;
 	fd = open(path, OREAD);
 	if(fd < 0)
 		sysfatal("cannot open %s: %r\n", path);
@@ -217,19 +215,11 @@ _gendirtree(char path[], Dirtree *parent)
 			else
 				t->next = newt;
 			t = newt;
-			if(f->qid.type & QTDIR){
-				if(buf == nil){
-					buf = malloc(PATHMAX+1);
-					buf[PATHMAX] = '\0';
-				}
-				if(snprint(buf, PATHMAX, "%s/%s", path, f->name) < 0)
-					sysfatal("cannot generate path: %r");
+			if(f->qid.type & QTDIR)
 				newt->isdir = 1;
-			}
 		}
 		free(dirs);
 	}
-	free(buf);
 	close(fd);
 	return T;
 }
