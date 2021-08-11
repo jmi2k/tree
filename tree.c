@@ -10,12 +10,13 @@ typedef struct Dirtree Dirtree;
 
 enum
 {
-	PATHMAX	= 8191,
+	PATHMAX		= 8191,
 
-	Indent	= 32,
-	Padx	= 8,
-	Pady	= 3,
-	Lyoff	= -3,
+	Scrollwid	= 12,
+	Indent		= 32,
+	Padx		= 8,
+	Pady		= 3,
+	Lyoff		= -3,
 #define Lxoff	(stringwidth(font, "⊞")/2-1)
 };
 
@@ -68,6 +69,7 @@ Image*			textcol;
 Image*			linecol;
 Image*			selcol;
 Image*			seltextcol;
+Image*			scrollback;
 Mousectl*		mousectl;
 Keyboardctl*	keyboardctl;
 Dirtree*		dirtree;
@@ -143,13 +145,14 @@ Start:
 	if(T == nil)
 		return i;
 
-	p = addpt(Pt(level*Indent + Padx, Itemy(*item-scrollpos)), screen->r.min);
+	p = screen->r.min;
+	p = addpt(p, Pt(level*Indent+Padx+Scrollwid, Itemy(*item-scrollpos)));
 	q = addpt(p, Pt(Dy(screen->r), Itemh));
 	if(!rectXrect(screen->r, Rpt(p, q)))
 		goto Skip;
 	q = p;
 	if(*item == selitem){
-		p₀ = Pt(screen->r.min.x, p.y-Pady);
+		p₀ = Pt(screen->r.min.x+Scrollwid, p.y-Pady);
 		p₁ = Pt(screen->r.max.x, p.y+font->height+Pady);
 		draw(screen, Rpt(p₀, p₁), selcol, nil, ZP);
 		col = seltextcol;
@@ -237,7 +240,14 @@ gendirtree(void)
 void
 redraw(void)
 {
+	Rectangle scrollr;
+
 	draw(screen, screen->r, treeback, nil, ZP);
+	scrollr.min = screen->r.min;
+	scrollr.max = Pt(screen->r.min.x+Scrollwid, screen->r.max.y);
+	draw(screen, scrollr, scrollback, nil, ZP);
+	scrollr.max.x--;
+	draw(screen, scrollr, treeback, nil, ZP);
 	drawdirtree(dirtree);
 	flushimage(display, 1);
 }
@@ -399,6 +409,7 @@ initstyle(void)
 	linecol = allocimage(display, r₁, CMAP8, 1, 0x777777FF);
 	selcol = allocimage(display, r₁, CMAP8, 1, 0xDC143CFF);
 	seltextcol = display->white;
+	scrollback = allocimage(display, r₁, CMAP8, 1, 0x777777FF);
 }
 
 void
