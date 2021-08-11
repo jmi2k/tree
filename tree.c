@@ -232,7 +232,7 @@ gendirtree(void)
 	dirtree = mallocz(sizeof(Dirtree), 1);
 	dirtree->name = strdup(rootpath);
 	dirtree->isdir = 1;
-	dirtree->children = _gendirtree(rootpath, nil);
+	dirtree->children = _gendirtree(rootpath, dirtree);
 }
 
 void
@@ -338,13 +338,8 @@ toggleitem(void)
 		freedirtree(t->children);
 		t->children = nil;
 	}else{
-		if(t == dirtree){
-			strncpy(buf, rootpath, PATHMAX+1);
-			t->children = _gendirtree(buf, nil);
-		}else{
-			snprint(buf, PATHMAX+1, "%s/%本", rootpath, t);
-			t->children = _gendirtree(buf, t);
-		}
+		snprint(buf, PATHMAX+1, "%本", t);
+		t->children = _gendirtree(buf, t);
 	}
 	t->unfold ^= 1;
 	redraw();
@@ -359,7 +354,7 @@ plumbitem(void)
 	t = clickitem(3);
 	if(t == nil)
 		return;
-	snprint(buf, PATHMAX+1, "%s/%本", rootpath, t);
+	snprint(buf, PATHMAX+1, "%本", t);
 	plumbsendtext(plumbfd, "tree", nil, wdir, buf);
 }
 
