@@ -39,6 +39,7 @@ struct Dirtree
 	char*		name;
 	int			unfold;
 	int			isdir;
+	int			n;
 	Dirtree*	children;
 	Dirtree*	parent;
 	Dirtree*	next;
@@ -48,6 +49,7 @@ int			dirtreefmt(Fmt*);
 void		freedirtree(Dirtree*);
 int			itemat(Point);
 void		scroll(int);
+void		mousescroll(void);
 int			_drawdirtree(Dirtree*, int, int*);
 int			drawdirtree(Dirtree*);
 Dirtree*	_gendirtree(char[], Dirtree*);
@@ -73,10 +75,11 @@ Image*			scrollback;
 Mousectl*		mousectl;
 Keyboardctl*	keyboardctl;
 Dirtree*		dirtree;
+Rectangle		scrollr;
+int				scrollpos;
 char			wdir[PATHMAX+1];
 char			rootpath[PATHMAX+1];
 int				plumbfd;
-int				scrollpos;
 int				selitem = -1;
 
 char *menu2str[] = {
@@ -128,6 +131,8 @@ scroll(int sign)
 	scrollpos += sign*n;
 	if(scrollpos < 0)
 		scrollpos = 0;
+	if(scrollpos > dirtree->n)
+		scrollpos = dirtree->n;
 	redraw();
 }
 
@@ -197,11 +202,11 @@ _gendirtree(char path[], Dirtree *parent)
 {
 	Dirtree *T, *t, *newt;
 	Dir *dirs, *f, *fe;
-	int fd;
-	long n;
+	int fd, n, nitems;
 
 	T = nil;
 	t = nil;
+	nitems = 0;
 	fd = open(path, OREAD);
 	if(fd < 0)
 		sysfatal("cannot open %s: %r\n", path);
@@ -211,6 +216,7 @@ _gendirtree(char path[], Dirtree *parent)
 			newt = mallocz(sizeof(Dirtree), 1);
 			newt->name = strdup(f->name);
 			newt->parent = parent;
+			newt->n = 1;
 			if(t == nil)
 				T = newt;
 			else
@@ -218,8 +224,13 @@ _gendirtree(char path[], Dirtree *parent)
 			t = newt;
 			if(f->qid.type & QTDIR)
 				newt->isdir = 1;
+			nitems++;
 		}
 		free(dirs);
+	}
+	while(parent){
+		parent->n += nitems;
+		parent = parent->parent;
 	}
 	close(fd);
 	return T;
@@ -232,20 +243,26 @@ gendirtree(void)
 	dirtree = mallocz(sizeof(Dirtree), 1);
 	dirtree->name = strdup(rootpath);
 	dirtree->isdir = 1;
-	dirtree->children = _gendirtree(rootpath, dirtree);
+	dirtree->n = 1;
 }
 
 void
 redraw(void)
 {
-	Rectangle scrollr;
+	Rectangle r;
+	int y₀, Δy, nvis;
 
+	scrollr = rectaddpt(Rect(0, 0, Scrollwid, Dy(screen->r)), screen->r.min);
+	Δy = Dy(scrollr);
+	y₀ = scrollr.min.y;
+	nvis = Scripos(screen->r.max.y-1);
+	r = scrollr;
 	draw(screen, screen->r, treeback, nil, ZP);
-	scrollr.min = screen->r.min;
-	scrollr.max = Pt(screen->r.min.x+Scrollwid, screen->r.max.y);
 	draw(screen, scrollr, scrollback, nil, ZP);
-	scrollr.max.x--;
-	draw(screen, scrollr, treeback, nil, ZP);
+	r.max.x--;
+	r.min.y += scrollpos*Δy/dirtree->n;
+	r.max.y = y₀ + (scrollpos+nvis)*Δy/dirtree->n;
+	draw(screen, r, treeback, nil, ZP);
 	drawdirtree(dirtree);
 	flushimage(display, 1);
 }
@@ -327,21 +344,25 @@ void
 toggleitem(void)
 {
 	static char buf[PATHMAX+1];
-	Dirtree *t;
+	Dirtree *T, *t;
+	int n;
 
-	t = clickitem(1);
-	if(t == nil)
+	T = clickitem(1);
+	if(T == nil)
 		return;
-	if(!t->isdir)
+	if(!T->isdir)
 		return;
-	if(t->unfold){
-		freedirtree(t->children);
-		t->children = nil;
+	if(T->unfold){
+		n = T->n;
+		for(t = T; t != nil; t = t->parent)
+			t->n -= n-1;
+		freedirtree(T->children);
+		T->children = nil;
 	}else{
-		snprint(buf, PATHMAX+1, "%本", t);
-		t->children = _gendirtree(buf, t);
+		snprint(buf, PATHMAX+1, "%本", T);
+		T->children = _gendirtree(buf, T);
 	}
-	t->unfold ^= 1;
+	T->unfold ^= 1;
 	redraw();
 }
 
