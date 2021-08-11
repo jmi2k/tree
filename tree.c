@@ -423,7 +423,7 @@ initstyle(void)
 	linecol = allocimage(display, r₁, CMAP8, 1, 0x777777FF);
 	selcol = allocimage(display, r₁, CMAP8, 1, 0xDC143CFF);
 	seltextcol = display->white;
-	scrollback = allocimage(display, r₁, CMAP8, 1, 0x777777FF);
+	scrollback = allocimage(display, r₁, CMAP8, 1, 0x999999FF);
 }
 
 void
