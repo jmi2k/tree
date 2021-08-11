@@ -134,7 +134,6 @@ scroll(int sign)
 int
 _drawdirtree(Dirtree *T, int level, int *item)
 {
-	static char buf[PATHMAX+1];
 	Point p, q, p₀, p₁;
 	Image *col;
 	int i, last;
@@ -162,8 +161,7 @@ Start:
 		string(screen, p, col, ZP, font, T->unfold ? "⊟" : "⊞");
 		q.x += stringwidth(font, "⊞ ");
 	}
-	snprint(buf, PATHMAX+1, "%s", T->name);
-	string(screen, q, col, ZP, font, buf);
+	string(screen, q, col, ZP, font, T->name);
 	if(level > 0){
 		p₀ = addpt(p, Pt(-Padx, Itemh/2+Lyoff));
 		p₁ = Pt(p₀.x-Indent+Lxoff+Padx, p₀.y);
